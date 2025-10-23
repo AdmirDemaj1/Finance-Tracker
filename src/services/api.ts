@@ -1,8 +1,10 @@
+import { useCallback } from "react";
 import {
   Transaction,
   TransactionFormData,
   ApiResponse,
   Category,
+  ActionType,
 } from "../types";
 import { STORAGE_KEY } from "../utils/constants";
 
@@ -128,3 +130,12 @@ export const updateTransaction = async (
     throw new Error("Failed to update transaction");
   }
 };
+
+export const clearAllTransactions = async (): Promise<{ success: boolean }> => {
+  await delay(200);
+
+  localStorage.removeItem(STORAGE_KEY);
+  return { success: true };
+};
+
+

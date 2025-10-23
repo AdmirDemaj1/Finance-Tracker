@@ -78,7 +78,7 @@ export type TransactionAction =
 
 export type ApiResponse<T> = {
   data?: T;
-  message: string;
+  message?: string;
   success: boolean;
 };
 
@@ -122,7 +122,7 @@ export interface TouchFields {
 
 
 // Custom Hook return types
-export interface useTransactionReturn {
+export interface UseTransactionsReturn {
   transactions: Transaction[];
   isLoading: boolean;
   error: string | null;
@@ -132,7 +132,7 @@ export interface useTransactionReturn {
   clearError: () => void;
 }
 
-export interface useFormReturn<T> {
+export interface UseFormReturn<T> {
   values: T;
   errors: FormErrors;
   touched: TouchFields;
