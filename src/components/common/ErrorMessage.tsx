@@ -1,4 +1,9 @@
 import React from "react";
+import {
+  FaExclamationTriangle,
+  FaInfoCircle,
+  FaCheckCircle,
+} from "react-icons/fa";
 
 interface ErrorMessageProps {
   message: string;
@@ -31,7 +36,29 @@ const ErrorMessage: React.FC<ErrorMessageProps> = ({
         return <FaExclamationTriangle />;
     }
   };
-  return <div className="error-message"> {message} </div>;
+  return (
+    <div className={typeClass} role="alert">
+      <div className="error-content">
+        <span className="error-icon" aria-hidden="true">
+          {getIcon()}
+        </span>
+        <div className="error-text">
+          {title && <strong className="error-title">{title}</strong>}
+          <p className="error-description">{message}</p>
+        </div>
+      </div>
+
+      {onDismiss && (
+        <button
+          onClick={onDismiss}
+          className="error-dismiss"
+          aria-label="Dismiss message"
+        >
+          ×
+        </button>
+      )}
+    </div>
+  );
 };
 
 export default ErrorMessage;

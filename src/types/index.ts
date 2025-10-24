@@ -84,7 +84,7 @@ export type ApiResponse<T> = {
 
 export interface CategoryBreakdown {
   income: Record<string, number>;
-  expenses: Record<string, number>;
+  expense: Record<string, number>;
 }
 
 export interface FinancialStatistics {
