@@ -19,19 +19,21 @@ export interface Transaction {
   id: string;
   amount: number;
   type: TransactionType;
-  category: Category;
+  category: Category | '';
   date: string;
   description: string;
+  currency: string;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export interface TransactionFormData {
-  amount: number;
+  amount: string | number;
   type: TransactionType;
-  category: Category | "";
+  category: Category | '';
   date: string;
   description: string;
+  currency: string;
 }
 
 export interface TransactionState {
@@ -78,7 +80,7 @@ export type TransactionAction =
 
 export type ApiResponse<T> = {
   data?: T;
-  message?: string;
+  error?: string;
   success: boolean;
 };
 

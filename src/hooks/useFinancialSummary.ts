@@ -7,16 +7,17 @@ export const useFinancialSummary = (
   const totalIncome = useMemo((): number => {
     return transactions
       .filter((t) => t.type === TransactionType.INCOME)
-      .reduce((sum, transaction) => sum + transaction.amount, 0);
+      .reduce((sum, transaction) => sum + Math.abs(transaction.amount), 0);
   }, [transactions]);
 
   const totalExpenses = useMemo((): number => {
     return transactions
       .filter((t) => t.type === TransactionType.EXPENSE)
-      .reduce((sum, transaction) => sum + transaction.amount, 0);
+      .reduce((sum, transaction) => sum + Math.abs(transaction.amount), 0);
   }, [transactions]);
 
   const balance = useMemo((): number => {
+    // Calculate balance as income minus expenses (using the already calculated totals)
     return totalIncome - totalExpenses;
   }, [totalIncome, totalExpenses]);
 
@@ -29,7 +30,7 @@ export const useFinancialSummary = (
     transactions.forEach((transaction) => {
       const type = transaction.type;
       const category = transaction.category;
-      const amount = transaction.amount;
+      const amount = Math.abs(transaction.amount);
 
       if (!breakdown[type][category]) {
         breakdown[type][category] = 0;

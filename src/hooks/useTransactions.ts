@@ -44,7 +44,7 @@ export const useTransactions = (): UseTransactionsReturn => {
         const message =
           error instanceof Error ? error.message : "Unknown error";
         dispatch({ type: ActionType.SET_ERROR, payload: message });
-        return { success: false, message: "Failed to create transaction" };
+        return { success: false, error: message };
       } finally {
         dispatch({ type: ActionType.SET_LOADING, payload: false });
       }
@@ -64,7 +64,7 @@ export const useTransactions = (): UseTransactionsReturn => {
         const message =
           error instanceof Error ? error.message : "Unknown error";
         dispatch({ type: ActionType.SET_ERROR, payload: message });
-        return { success: false, message: "Failed to delete transaction" };
+        return { success: false, error: message };
       }
     },
     []
@@ -88,7 +88,7 @@ export const useTransactions = (): UseTransactionsReturn => {
         const message =
           error instanceof Error ? error.message : "Unknown error";
         dispatch({ type: ActionType.SET_ERROR, payload: message });
-        return { success: false, message: "Failed to update transaction" };
+        return { success: false, error: message };
       }
     },
     []

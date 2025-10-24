@@ -1,10 +1,7 @@
-import { useCallback } from "react";
 import {
   Transaction,
   TransactionFormData,
-  ApiResponse,
-  Category,
-  ActionType,
+  TransactionType,
 } from "../types";
 import { STORAGE_KEY } from "../utils/constants";
 
@@ -50,8 +47,18 @@ export const createTransaction = async (
       throw new Error("Invalid transaction data");
     }
 
+    // Convert amount to number with 2 decimal places and handle expense sign
+    const numericAmount = typeof transactionData.amount === 'string' 
+      ? parseFloat(transactionData.amount || '0') 
+      : transactionData.amount;
+      
+    const amount = transactionData.type === TransactionType.EXPENSE 
+      ? -Math.abs(numericAmount) 
+      : Math.abs(numericAmount);
+
     const newTransaction: Transaction = {
       ...transactionData,
+      amount,
       id: Date.now().toString() + Math.random().toString(36).substring(2, 15),
       category: transactionData.category as any,
       createdAt: new Date().toISOString(),
@@ -103,12 +110,22 @@ export const updateTransaction = async (
     const updatedTransactions = existingTransactions.map((transaction) => {
       if (transaction.id === id) {
         foundTransaction = true;
-        return {
+        const updatedData = {
           ...transaction,
           ...updates,
           id,
           updatedAt: new Date().toISOString(),
         };
+
+        // Ensure amount is properly formatted and signed
+        if (typeof updatedData.amount === 'number') {
+          const parsedAmount = parseFloat(updatedData.amount.toString()).toFixed(2);
+          updatedData.amount = updatedData.type === TransactionType.EXPENSE
+            ? -Math.abs(parseFloat(parsedAmount))
+            : Math.abs(parseFloat(parsedAmount));
+        }
+
+        return updatedData;
       }
       return transaction;
     });
