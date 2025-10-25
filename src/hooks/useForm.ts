@@ -12,12 +12,7 @@ import {
   TouchFields,
 } from "../types";
 
-/**
- * GENERIC FORM HOOK with TypeScript
- *
- * Generic type T represents the form data structure
- * This provides full type safety for form values
- */
+
 
 export const useForm = <T extends Record<string, any>>(
   initialValues: T,
@@ -35,7 +30,7 @@ export const useForm = <T extends Record<string, any>>(
     ): void => {
       const { name, value, type } = e.target;
 
-      // Type narrowing for checkbox inputs
+    
       const inputValue =
         type === "checkbox" ? (e.target as HTMLInputElement).checked : value;
 

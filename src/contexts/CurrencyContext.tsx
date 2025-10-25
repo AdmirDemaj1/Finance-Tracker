@@ -35,7 +35,7 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
     setIsLoadingRates(true);
     
     try {
-      // Check cache first (with currency-specific key)
+      // chache
       const cacheKey = `${EXCHANGE_RATES_KEY}-${displayCurrency}`;
       const cachedData = localStorage.getItem(cacheKey);
       if (cachedData) {
@@ -47,9 +47,9 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
         }
       }
 
-      // Fetch fresh rates
       const response = await fetch(`https://api.exchangerate-api.com/v4/latest/${displayCurrency}`);
       
+      console.log("response", response.json());
       if (!response.ok) {
         throw new Error('Failed to fetch exchange rates');
       }
@@ -57,20 +57,21 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
       const data = await response.json();
       const rates = data.rates || {};
 
-      // Add base currency (1:1)
+      
       rates[displayCurrency] = 1;
+
+      console.log("rates", rates);
 
       setExchangeRates(rates);
       
-      // Cache the rates with currency-specific key
+      // cache the rates
       localStorage.setItem(cacheKey, JSON.stringify({
         rates,
         baseCurrency: displayCurrency,
         timestamp: Date.now()
       }));
     } catch (error) {
-      console.error('Error fetching exchange rates:', error);
-      // Use fallback rates if available
+      console.log('Error fetching exchange rates:', error);
       const cacheKey = `${EXCHANGE_RATES_KEY}-${displayCurrency}`;
       const cachedData = localStorage.getItem(cacheKey);
       if (cachedData) {
@@ -98,12 +99,6 @@ export const CurrencyProvider: React.FC<CurrencyProviderProps> = ({ children }) 
       return amount;
     }
 
-    // The API gives rates where: 1 displayCurrency = rate * otherCurrency
-    // For example, if displayCurrency is EUR and rates[USD] = 1.10, it means 1 EUR = 1.10 USD
-    // To convert FROM USD TO EUR: amount_in_USD / 1.10 = amount_in_EUR
-    // To convert FROM EUR TO USD: amount_in_EUR * 1.10 = amount_in_USD
-    // 
-    // Since we're converting FROM fromCurrency TO displayCurrency, we divide
     return amount / fromRate;
   };
 

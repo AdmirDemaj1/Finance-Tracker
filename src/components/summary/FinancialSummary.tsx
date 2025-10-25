@@ -2,6 +2,7 @@ import React, { useMemo } from "react";
 import { useFinancialSummary } from "../../hooks/useFinancialSummary";
 import { useCurrency } from "../../contexts/CurrencyContext";
 import { Transaction } from "../../types";
+import CategoryPieChart from "../charts/CategoryPieChart";
 
 interface FinancialSummaryProps {
   transactions: Transaction[];
@@ -11,21 +12,25 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({
   transactions,
 }) => {
   const { displayCurrency, convertAmount } = useCurrency();
-  
+
   // Convert all transactions to display currency
   const convertedTransactions = useMemo(() => {
-    return transactions.map(transaction => ({
+    return transactions.map((transaction) => ({
       ...transaction,
-      amount: convertAmount(transaction.amount, transaction.currency)
+      amount: convertAmount(transaction.amount, transaction.currency),
     }));
   }, [transactions, convertAmount]);
 
   const { totalIncome, totalExpenses, balance, categoryBreakdown, statistics } =
     useFinancialSummary(convertedTransactions);
 
+
+
   const formatCurrency = (amount: number): string => {
-    // Ensure the amount is a proper number and limit to 2 decimal places
     const parsedAmount = parseFloat(amount.toFixed(2));
+    console.log("parsedAmount", parsedAmount);
+    console.log("displayCurrency", displayCurrency);
+    // Using Intl.NumberFormat to format the currecny for ex $100.00 or €100.00 and others.
     return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency: displayCurrency,
@@ -33,6 +38,8 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({
       maximumFractionDigits: 2,
     }).format(parsedAmount);
   };
+
+  console.log("formatted amount", formatCurrency(balance));
 
   const balanceClass =
     balance > 0
@@ -51,7 +58,14 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({
 
   return (
     <div className="financial-summary">
-      <h2>Financial Overview</h2>
+      <div className="summary-header">
+        <h2>Financial Overview</h2>
+        {statistics.transactionCount > 0 && (
+          <div className="transaction-count-badge">
+            {statistics.transactionCount} transaction{statistics.transactionCount !== 1 ? 's' : ''}
+          </div>
+        )}
+      </div>
 
       <div className="summary-cards">
         <div className="summary-card card-balance">
@@ -178,6 +192,32 @@ const FinancialSummary: React.FC<FinancialSummaryProps> = ({
       {statistics.transactionCount === 0 && (
         <div className="summary-empty">
           <p>Add some transactions to see your financial summary!</p>
+        </div>
+      )}
+
+      {statistics.transactionCount > 0 && (
+        <div className="charts-section">
+          <h3 className="section-title">Visual Analytics</h3>
+
+          <div className="charts-grid">
+            <div className="pie-charts-row">
+              {Object.keys(categoryBreakdown.income).length > 0 && (
+                <CategoryPieChart
+                  data={categoryBreakdown.income}
+                  title="Income by Category"
+                  type="income"
+                />
+              )}
+
+              {Object.keys(categoryBreakdown.expense).length > 0 && (
+                <CategoryPieChart
+                  data={categoryBreakdown.expense}
+                  title="Expenses by Category"
+                  type="expense"
+                />
+              )}
+            </div>
+          </div>
         </div>
       )}
     </div>
