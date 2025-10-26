@@ -1,6 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import TransactionItem from "./TransactionItem";
-import { Transaction, TransactionType } from "../../types";
+import FilterControls, { FilterType, SortOption } from "./FilterControls";
+import SearchBar from "../common/SearchBar";
+import Pagination from "../common/Pagination";
+import { Transaction } from "../../types";
 
 interface TransactionListProps {
   transactions: Transaction[];
@@ -8,13 +11,7 @@ interface TransactionListProps {
   onEdit?: (transaction: Transaction) => void;
 }
 
-type FilterType = "all" | TransactionType;
-type SortOption =
-  | "date-desc"
-  | "date-asc"
-  | "amount-desc"
-  | "amount-asc"
-  | "category";
+const ITEMS_PER_PAGE = 10;
 
 const TransactionList: React.FC<TransactionListProps> = ({
   transactions,
@@ -23,28 +20,65 @@ const TransactionList: React.FC<TransactionListProps> = ({
 }) => {
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [sortBy, setSortBy] = useState<SortOption>("date-desc");
+  const [searchQuery, setSearchQuery] = useState<string>("");
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
-  const filteredTransactions = transactions.filter((transaction) => {
-    if (filterType === "all") return true;
-    return transaction.type === filterType;
-  });
+  
+  const filteredTransactions = useMemo(() => {
+    return transactions.filter((transaction) => {
+      
+      const typeMatch = filterType === "all" || transaction.type === filterType;
+      
+      
+      const searchMatch = searchQuery === "" || 
+        transaction.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        transaction.category.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        transaction.amount.toString().includes(searchQuery);
+      
+      return typeMatch && searchMatch;
+    });
+  }, [transactions, filterType, searchQuery]);
 
-  const sortedTransactions = [...filteredTransactions].sort((a, b) => {
-    switch (sortBy) {
-      case "date-desc":
-        return new Date(b.date).getTime() - new Date(a.date).getTime();
-      case "date-asc":
-        return new Date(a.date).getTime() - new Date(b.date).getTime();
-      case "amount-desc":
-        return b.amount - a.amount;
-      case "amount-asc":
-        return a.amount - b.amount;
-      case "category":
-        return a.category.localeCompare(b.category);
-      default:
-        return 0;
-    }
-  });
+  const sortedTransactions = useMemo(() => {
+    return [...filteredTransactions].sort((a, b) => {
+      switch (sortBy) {
+        case "date-desc":
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        case "date-asc":
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        case "amount-desc":
+          return b.amount - a.amount;
+        case "amount-asc":
+          return a.amount - b.amount;
+        case "category":
+          return a.category.localeCompare(b.category);
+        default:
+          return 0;
+      }
+    });
+  }, [filteredTransactions, sortBy]);
+
+  
+  const totalPages = Math.ceil(sortedTransactions.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedTransactions = sortedTransactions.slice(startIndex, endIndex);
+
+  // Reset to page 1 when filters change
+  const handleFilterChange = (newFilter: FilterType) => {
+    setFilterType(newFilter);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (query: string) => {
+    setSearchQuery(query);
+    setCurrentPage(1);
+  };
+
+  const handleSortChange = (newSort: SortOption) => {
+    setSortBy(newSort);
+    setCurrentPage(1);
+  };
 
   if (transactions.length === 0) {
     return (
@@ -61,12 +95,14 @@ const TransactionList: React.FC<TransactionListProps> = ({
   if (sortedTransactions.length === 0) {
     return (
       <div className="transaction-list">
+        <SearchBar searchQuery={searchQuery} onSearchChange={handleSearchChange} />
+        
         <div className="list-controls">
           <FilterControls
             filterType={filterType}
-            setFilterType={setFilterType}
+            setFilterType={handleFilterChange}
             sortBy={sortBy}
-            setSortBy={setSortBy}
+            setSortBy={handleSortChange}
           />
         </div>
 
@@ -81,25 +117,30 @@ const TransactionList: React.FC<TransactionListProps> = ({
 
   return (
     <div className="transaction-list">
+      <SearchBar searchQuery={searchQuery} onSearchChange={handleSearchChange} />
+      
       <div className="list-controls">
         <FilterControls
           filterType={filterType}
-          setFilterType={setFilterType}
+          setFilterType={handleFilterChange}
           sortBy={sortBy}
-          setSortBy={setSortBy}
+          setSortBy={handleSortChange}
         />
 
         <div className="filter-stats">
-          Showing {sortedTransactions.length} of {transactions.length}{" "}
-          transactions
-          {filterType !== "all" && (
-            <span className="active-filter">({filterType} only)</span>
+          Showing {startIndex + 1}-{Math.min(endIndex, sortedTransactions.length)} of{" "}
+          {sortedTransactions.length} transactions
+          {(filterType !== "all" || searchQuery) && (
+            <span className="active-filter">
+              {filterType !== "all" && `(${filterType} only)`}
+              {searchQuery && ` (searching: "${searchQuery}")`}
+            </span>
           )}
         </div>
       </div>
 
       <div className="transactions">
-        {sortedTransactions.map((transaction) => (
+        {paginatedTransactions.map((transaction) => (
           <TransactionItem
             key={transaction.id}
             transaction={transaction}
@@ -108,54 +149,14 @@ const TransactionList: React.FC<TransactionListProps> = ({
           />
         ))}
       </div>
-    </div>
-  );
-};
 
-interface FilterControlsProps {
-  filterType: FilterType;
-  setFilterType: (type: FilterType) => void;
-  sortBy: SortOption;
-  setSortBy: (option: SortOption) => void;
-}
-
-const FilterControls: React.FC<FilterControlsProps> = ({
-  filterType,
-  setFilterType,
-  sortBy,
-  setSortBy,
-}) => {
-  return (
-    <div className="filter-controls">
-      <div className="filter-group">
-        <label htmlFor="filter-type">Filter:</label>
-        <select
-          id="filter-type"
-          value={filterType}
-          onChange={(e) => setFilterType(e.target.value as FilterType)}
-          className="filter-select"
-        >
-          <option value="all">All Transactions</option>
-          <option value={TransactionType.INCOME}>Income Only</option>
-          <option value={TransactionType.EXPENSE}>Expenses Only</option>
-        </select>
-      </div>
-
-      <div className="filter-group">
-        <label htmlFor="sort-by">Sort by:</label>
-        <select
-          id="sort-by"
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as SortOption)}
-          className="filter-select"
-        >
-          <option value="date-desc">Newest First</option>
-          <option value="date-asc">Oldest First</option>
-          <option value="amount-desc">Highest Amount</option>
-          <option value="amount-asc">Lowest Amount</option>
-          <option value="category">Category (A-Z)</option>
-        </select>
-      </div>
+      {totalPages > 1 && (
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={setCurrentPage}
+        />
+      )}
     </div>
   );
 };
