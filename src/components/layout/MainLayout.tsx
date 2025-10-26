@@ -2,6 +2,7 @@ import React from 'react';
 import { Outlet, Link, useLocation } from 'react-router-dom';
 import ErrorMessage from '../common/ErrorMessage';
 import CurrencySelector from '../common/CurrencySelector';
+import ThemeToggle from '../common/ThemeToggle';
 import { useTransactions } from '../../hooks/useTransactions';
 
 const MainLayout: React.FC = () => {
@@ -18,7 +19,10 @@ const MainLayout: React.FC = () => {
               Take control of your finances - track income and expenses effortlessly
             </p>
           </div>
-          <CurrencySelector />
+          <div className="header-controls">
+            <CurrencySelector />
+            <ThemeToggle />
+          </div>
         </div>
         <nav className="main-nav">
           <Link to="/" className={location.pathname === '/' ? 'active' : ''}>
